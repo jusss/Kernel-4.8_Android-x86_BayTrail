@@ -61,6 +61,6 @@ example:
 
 #NOTES:
 
-trye remove "BYT_RT5640_MONO_SPEAKER |"	if your device is stereo
+try remove "BYT_RT5640_MONO_SPEAKER |"	if your device is stereo
 
 try change  "BYT_RT5640_SSP2_AIF2 |"if it does not work with try BYT_RT5640_SSP0_AIF1 or BYT_RT5640_SSP0_AIF1
