@@ -34,10 +34,12 @@ In my case:
 
       Version: Type1 - TBD by OEM
  
- 
-    add element in  byt_rt5640_quirk_table[] = {
 
-#example:
+
+#add element in  byt_rt5640_quirk_table[] = {
+
+
+example:
 
  {
  
