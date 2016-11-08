@@ -4,7 +4,11 @@ for Tablet Mediacom WinPad W101 3G
 Replace Firmware  fw_sst_0f28_ssp0.bin -> /lib/firmware/intel/fw_sst_0f28.bin
 
 
+<<<<<<< HEAD
 #Change File /sound/soc/intel/boards/bytcr_rt5640.c
+=======
+Change File /sound/soc/intel/boards/bytcr_rt5640.c
+>>>>>>> upstream/master
 
 line
 765		"%s", "rt5640-aif1");// replace "rt5640-aif[1|2]" 
