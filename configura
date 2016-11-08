@@ -1,0 +1,1 @@
+make -j5 O=out menuconfig
