@@ -40,6 +40,7 @@ In my case:
 #example:
 
  {
+ 
  	.callback = byt_rt5640_quirk_cb,    
     
 	.matches = {    
