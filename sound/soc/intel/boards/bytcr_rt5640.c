@@ -762,7 +762,7 @@ static int snd_byt_rt5640_mc_probe(struct platform_device *pdev)
 		/* fixup codec aif name */
 		snprintf(byt_rt5640_codec_aif_name,
 			sizeof(byt_rt5640_codec_aif_name),
-			"%s", "rt5640-aif1");//mia original aif2
+			"%s", "rt5640-aif1");// replace "rt5640-aif[1|2]" 
 
 		byt_rt5640_dais[dai_index].codec_dai_name =
 			byt_rt5640_codec_aif_name;
@@ -774,7 +774,7 @@ static int snd_byt_rt5640_mc_probe(struct platform_device *pdev)
 		/* fixup cpu dai name name */
 		snprintf(byt_rt5640_cpu_dai_name,
 			sizeof(byt_rt5640_cpu_dai_name),
-			"%s", "ssp2-port");//mia original ssp0
+			"%s", "ssp2-port");// replace "ssp[0|2]-port"
 
 		byt_rt5640_dais[dai_index].cpu_dai_name =
 			byt_rt5640_cpu_dai_name;
