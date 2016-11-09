@@ -389,18 +389,15 @@ static const struct dmi_system_id byt_rt5640_quirk_table[] = {
 						 BYT_RT5640_SSP0_AIF1),
 
 	},
-		{
-		.callback = byt_rt5640_quirk_cb,
-		.matches = {
-			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "Insyde"),
-			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "BayTrail"),
-		},
-		.driver_data = (unsigned long *)(BYT_RT5640_IN1_MAP |
-						 BYT_RT5640_DIFF_MIC |
-						 BYT_RT5640_SSP2_AIF2 |
-						 BYT_RT5640_MCLK_EN
-						 ),
-	},
+        {
+                .callback = byt_rt5640_quirk_cb,
+                .matches = {
+                        DMI_EXACT_MATCH(DMI_SYS_VENDOR, "Insyde"),
+                        DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "BayTrail"),
+                },
+                .driver_data = (unsigned long *)(BYT_RT5640_IN1_MAP |
+                                                 BYT_RT5640_MCLK_EN),
+        },
 	{}
 };
 
@@ -701,6 +698,10 @@ static bool is_valleyview(void)
 	return true;
 }
 
+struct acpi_chan_package {   /* ACPICA seems to require 64 bit integers */
+	u64 aif_value;       /* 1: AIF1, 2: AIF2 */
+	u64 mclock_value;    /* usually 25MHz (0x17d7940), ignored */
+};
 
 static int snd_byt_rt5640_mc_probe(struct platform_device *pdev)
 {
@@ -710,6 +711,7 @@ static int snd_byt_rt5640_mc_probe(struct platform_device *pdev)
 	int i;
 	int dai_index;
 	struct byt_rt5640_private *priv;
+	bool is_bytcr = false;
 
 	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_ATOMIC);
 	if (!priv)
@@ -746,8 +748,52 @@ static int snd_byt_rt5640_mc_probe(struct platform_device *pdev)
 		struct sst_platform_info *p_info = mach->pdata;
 		const struct sst_res_info *res_info = p_info->res_info;
 
-		/* TODO: use CHAN package info from BIOS to detect AIF1/AIF2 */
-		if (res_info->acpi_ipc_irq_index == 0) {
+		if (res_info->acpi_ipc_irq_index == 0)
+			is_bytcr = true;
+	}
+
+	if (is_bytcr) {
+		/*
+		 * Baytrail CR platforms may have CHAN package in BIOS, try
+		 * to find relevant routing quirk based as done on Windows
+		 * platforms. We have to read the information directly from the
+		 * BIOS, at this stage the card is not created and the links
+		 * with the codec driver/pdata are non-existent
+		 */
+
+		struct acpi_chan_package chan_package;
+
+		/* format specified: 2 64-bit integers */
+		struct acpi_buffer format = {sizeof("NN"), "NN"};
+		struct acpi_buffer state = {0, NULL};
+		struct sst_acpi_package_context pkg_ctx;
+		bool pkg_found = false;
+
+		state.length = sizeof(struct acpi_chan_package);
+		state.pointer = &chan_package;
+
+		pkg_ctx.name = "CHAN";
+		pkg_ctx.length = 2;
+		pkg_ctx.format = &format;
+		pkg_ctx.state = &state;
+		pkg_ctx.data_valid = false;
+
+		pkg_found = sst_acpi_find_package_from_hid(mach->id, &pkg_ctx);
+		if (pkg_found) {
+			if (chan_package.aif_value == 1) {
+				dev_info(&pdev->dev, "BIOS Routing: AIF1 connected\n");
+				byt_rt5640_quirk |= BYT_RT5640_SSP0_AIF1;
+			} else  if (chan_package.aif_value == 2) {
+				dev_info(&pdev->dev, "BIOS Routing: AIF2 connected\n");
+				byt_rt5640_quirk |= BYT_RT5640_SSP0_AIF2;
+			} else {
+				dev_info(&pdev->dev, "BIOS Routing isn't valid, ignored\n");
+				pkg_found = false;
+			}
+		}
+
+		if (!pkg_found) {
+			/* no BIOS indications, assume SSP0-AIF2 connection */
 			byt_rt5640_quirk |= BYT_RT5640_SSP0_AIF2;
 		}
 	}
@@ -762,7 +808,7 @@ static int snd_byt_rt5640_mc_probe(struct platform_device *pdev)
 		/* fixup codec aif name */
 		snprintf(byt_rt5640_codec_aif_name,
 			sizeof(byt_rt5640_codec_aif_name),
-			"%s", "rt5640-aif1");// replace "rt5640-aif[1|2]" 
+			"%s", "rt5640-aif2");
 
 		byt_rt5640_dais[dai_index].codec_dai_name =
 			byt_rt5640_codec_aif_name;
@@ -774,7 +820,7 @@ static int snd_byt_rt5640_mc_probe(struct platform_device *pdev)
 		/* fixup cpu dai name name */
 		snprintf(byt_rt5640_cpu_dai_name,
 			sizeof(byt_rt5640_cpu_dai_name),
-			"%s", "ssp2-port");// replace "ssp[0|2]-port"
+			"%s", "ssp0-port");
 
 		byt_rt5640_dais[dai_index].cpu_dai_name =
 			byt_rt5640_cpu_dai_name;
