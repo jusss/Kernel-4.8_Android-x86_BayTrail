@@ -270,6 +270,7 @@ static void axp288_extcon_enable_irq(struct axp288_extcon_info *info)
 static int axp288_extcon_probe(struct platform_device *pdev)
 {
 	struct axp288_extcon_info *info;
+	struct axp288_extcon_pdata *pdata;
 	struct axp20x_dev *axp20x = dev_get_drvdata(pdev->dev.parent);
 	int ret, i, pirq, gpio;
 
@@ -280,7 +281,8 @@ static int axp288_extcon_probe(struct platform_device *pdev)
 	info->dev = &pdev->dev;
 	info->regmap = axp20x->regmap;
 	info->regmap_irqc = axp20x->regmap_irqc;
-	info->pdata = pdev->dev.platform_data;
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	info->pdata = pdata;
 
 	if (!info->pdata) {
 		/* Try ACPI provided pdata via device properties */

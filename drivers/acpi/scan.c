@@ -1084,8 +1084,8 @@ bool acpi_device_is_battery(struct acpi_device *adev)
 	struct acpi_hardware_id *hwid;
 
 	list_for_each_entry(hwid, &adev->pnp.ids, list)
-		if (!strcmp("PNP0C0A", hwid->id))
-			return true;
+//mia		if (!strcmp("PNP0C0A", hwid->id))
+//			return true;
 
 	return false;
 }

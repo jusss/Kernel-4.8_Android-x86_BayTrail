@@ -58,7 +58,7 @@ static int acpi_ac_remove(struct acpi_device *device);
 static void acpi_ac_notify(struct acpi_device *device, u32 event);
 
 static const struct acpi_device_id ac_device_ids[] = {
-	{"ACPI0003", 0},
+//mia	{"ACPI0003", 0},
 	{"", 0},
 };
 MODULE_DEVICE_TABLE(acpi, ac_device_ids);

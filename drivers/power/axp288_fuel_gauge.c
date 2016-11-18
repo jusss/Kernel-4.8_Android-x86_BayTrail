@@ -1080,6 +1080,7 @@ static int axp288_fuel_gauge_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	struct axp288_fg_info *info;
+	struct axp20x_fg_pdata *pdata;
 	struct axp20x_dev *axp20x = dev_get_drvdata(pdev->dev.parent);
 	struct power_supply_config psy_cfg = {};
 
@@ -1091,7 +1092,8 @@ static int axp288_fuel_gauge_probe(struct platform_device *pdev)
 	info->regmap = axp20x->regmap;
 	info->regmap_irqc = axp20x->regmap_irqc;
 	info->status = POWER_SUPPLY_STATUS_UNKNOWN;
-	info->pdata = pdev->dev.platform_data;
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	info->pdata=pdata;
 	if (!info->pdata)
 		return -ENODEV;
 

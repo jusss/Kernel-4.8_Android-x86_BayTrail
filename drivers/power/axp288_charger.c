@@ -812,6 +812,7 @@ static int axp288_charger_probe(struct platform_device *pdev)
 {
 	int ret, i, pirq;
 	struct axp288_chrg_info *info;
+	struct axp20x_chrg_pdata *pdata;
 	struct axp20x_dev *axp20x = dev_get_drvdata(pdev->dev.parent);
 	struct power_supply_config charger_cfg = {};
 
@@ -822,7 +823,9 @@ static int axp288_charger_probe(struct platform_device *pdev)
 	info->pdev = pdev;
 	info->regmap = axp20x->regmap;
 	info->regmap_irqc = axp20x->regmap_irqc;
-	info->pdata = pdev->dev.platform_data;
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	info->pdata = pdata;
+
 
 	if (!info->pdata) {
 		/* Try ACPI provided pdata via device properties */

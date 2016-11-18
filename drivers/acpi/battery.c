@@ -87,7 +87,7 @@ enum acpi_battery_files {
 #endif
 
 static const struct acpi_device_id battery_device_ids[] = {
-	{"PNP0C0A", 0},
+//mia	{"PNP0C0A", 0},
 	{"", 0},
 };
 

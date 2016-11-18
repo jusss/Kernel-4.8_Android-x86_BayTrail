@@ -430,6 +430,27 @@ static void pm_qos_work_fn(struct work_struct *work)
 	__pm_qos_update_request(req, PM_QOS_DEFAULT_VALUE);
 }
 
+ /**
+ * pm_qos_cancel_request_lazy - cancels an existing qos request lazily.
+ * @req : handle to list element holding a pm_qos request to use
+ * @timeout_us: the delay before cancelling this qos request in usecs.
+ *
+ * After timeout_us, this qos request is cancelled.
+ */
+void pm_qos_cancel_request_lazy(struct pm_qos_request *req,
+                               unsigned int timeout_us)
+{
+       if (!req)
+               return;
+       if (WARN(!pm_qos_request_active(req),
+                "%s called for unknown object.", __func__))
+               return;
+
+       schedule_delayed_work(&req->work, usecs_to_jiffies(timeout_us));
+}
+EXPORT_SYMBOL_GPL(pm_qos_cancel_request_lazy);
+
+
 /**
  * pm_qos_add_request - inserts new qos request into the list
  * @req: pointer to a preallocated handle
