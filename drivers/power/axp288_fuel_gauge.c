@@ -671,9 +671,9 @@ static int fuel_gauge_get_property(struct power_supply *ps,
 		if (ret < 0)
 			goto fuel_gauge_read_err;
 		value |= (ret & FG_CC_MTR0_VAL_MASK);
-		val->intval = value * FG_DES_CAP_RES_LSB;
+		val->intval = value * FG_DES_CAP_RES_LSB /2;
 		break;
-	case POWER_SUPPLY_PROP_CHARGE_FULL:
+ 	case POWER_SUPPLY_PROP_CHARGE_FULL:
 		ret = fuel_gauge_reg_readb(info, AXP288_FG_DES_CAP1_REG);
 		if (ret < 0)
 			goto fuel_gauge_read_err;
@@ -683,7 +683,7 @@ static int fuel_gauge_get_property(struct power_supply *ps,
 		if (ret < 0)
 			goto fuel_gauge_read_err;
 		value |= (ret & FG_DES_CAP0_VAL_MASK);
-		val->intval = value * FG_DES_CAP_RES_LSB;
+		val->intval = value * FG_DES_CAP_RES_LSB / 2;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
 		val->intval = PROP_CURR(info->pdata->design_cap);
@@ -1094,6 +1094,9 @@ static int axp288_fuel_gauge_probe(struct platform_device *pdev)
 	info->status = POWER_SUPPLY_STATUS_UNKNOWN;
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
 	info->pdata=pdata;
+	info->pdata->max_volt=4200;
+	info->pdata->min_volt=3700;
+	info->pdata->design_cap=4400;
 	if (!info->pdata)
 		return -ENODEV;
 
@@ -1155,3 +1158,4 @@ MODULE_AUTHOR("Ramakrishna Pallala <ramakrishna.pallala@intel.com>");
 MODULE_AUTHOR("Todd Brandt <todd.e.brandt@linux.intel.com>");
 MODULE_DESCRIPTION("Xpower AXP288 Fuel Gauge Driver");
 MODULE_LICENSE("GPL");
+MODULE_DEVICE_TABLE(platform, axp288_fg_id_table);

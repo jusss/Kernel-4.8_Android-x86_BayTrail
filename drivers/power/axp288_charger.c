@@ -128,6 +128,7 @@
 #define ILIM_3000MA			3000	/* 3000mA */
 
 #define AXP288_EXTCON_DEV_NAME		"axp288_extcon"
+#define DEV_NAME	"axp288_charger"
 
 enum {
 	VBUS_OV_IRQ = 0,
@@ -178,6 +179,11 @@ struct axp288_chrg_info {
 	bool present;
 	bool enable_charger;
 	bool is_charger_enabled;
+};
+
+static const struct platform_device_id axp288_charger_id_table[] = {
+	{ .name = DEV_NAME },
+	{},
 };
 
 static inline int axp288_charger_set_cc(struct axp288_chrg_info *info, int cc)
@@ -823,9 +829,7 @@ static int axp288_charger_probe(struct platform_device *pdev)
 	info->pdev = pdev;
 	info->regmap = axp20x->regmap;
 	info->regmap_irqc = axp20x->regmap_irqc;
-	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
-	info->pdata = pdata;
-
+	info->pdata = pdev->dev.platform_data;
 
 	if (!info->pdata) {
 		/* Try ACPI provided pdata via device properties */
@@ -971,3 +975,4 @@ module_platform_driver(axp288_charger_driver);
 MODULE_AUTHOR("Ramakrishna Pallala <ramakrishna.pallala@intel.com>");
 MODULE_DESCRIPTION("X-power AXP288 Charger Driver");
 MODULE_LICENSE("GPL v2");
+MODULE_DEVICE_TABLE(platform, axp288_charger_id_table);
