@@ -127,6 +127,8 @@ static const struct regmap_range axp288_writeable_ranges[] = {
 };
 
 static const struct regmap_range axp288_volatile_ranges[] = {
+	// 0xb9	- 0xb9 :
+	regmap_reg_range(AXP20X_FG_RES, AXP20X_FG_RES),
 	// 0x00 - 0x01 :
 	regmap_reg_range(AXP20X_PWR_INPUT_STATUS, AXP20X_PWR_OP_MODE),
 	// 0x33 - 0x33 :
