@@ -128,7 +128,6 @@
 #define ILIM_3000MA			3000	/* 3000mA */
 
 #define AXP288_EXTCON_DEV_NAME		"axp288_extcon"
-#define DEV_NAME	"axp288_charger"
 
 enum {
 	VBUS_OV_IRQ = 0,
@@ -179,11 +178,6 @@ struct axp288_chrg_info {
 	bool present;
 	bool enable_charger;
 	bool is_charger_enabled;
-};
-
-static const struct platform_device_id axp288_charger_id_table[] = {
-	{ .name = DEV_NAME },
-	{},
 };
 
 static inline int axp288_charger_set_cc(struct axp288_chrg_info *info, int cc)
@@ -456,6 +450,7 @@ static int axp288_charger_usb_get_property(struct power_supply *psy,
 		val->intval = axp288_get_charger_health(info);
 		break;
 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		info->cc=1500;
 		val->intval = info->cc * 1000;
 		break;
 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
@@ -468,6 +463,7 @@ static int axp288_charger_usb_get_property(struct power_supply *psy,
 		val->intval = info->max_cv * 1000;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
+		info->inlmt=2000;
 		val->intval = info->inlmt * 1000;
 		break;
 	default:
@@ -627,6 +623,7 @@ static void axp288_charger_extcon_evt_worker(struct work_struct *work)
 		switch (info->cable.chg_type) {
 		case POWER_SUPPLY_TYPE_USB:
 			current_limit = ILIM_500MA;
+			current_limit = ILIM_2000MA;
 			break;
 		case POWER_SUPPLY_TYPE_USB_CDP:
 			current_limit = ILIM_1500MA;
@@ -640,6 +637,8 @@ static void axp288_charger_extcon_evt_worker(struct work_struct *work)
 			break;
 		}
 
+		current_limit = ILIM_2000MA;
+		
 		/* Set vbus current limit first, then enable charger */
 		ret = axp288_charger_set_vbus_inlmt(info, current_limit);
 		if (ret < 0) {
@@ -829,7 +828,9 @@ static int axp288_charger_probe(struct platform_device *pdev)
 	info->pdev = pdev;
 	info->regmap = axp20x->regmap;
 	info->regmap_irqc = axp20x->regmap_irqc;
-	info->pdata = pdev->dev.platform_data;
+
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	info->pdata = pdata;
 
 	if (!info->pdata) {
 		/* Try ACPI provided pdata via device properties */
@@ -924,6 +925,8 @@ static int axp288_charger_probe(struct platform_device *pdev)
 		}
 	}
 
+	info->cc=2000;//mia
+
 	charger_init_hw_regs(info);
 
 	return 0;
@@ -975,4 +978,3 @@ module_platform_driver(axp288_charger_driver);
 MODULE_AUTHOR("Ramakrishna Pallala <ramakrishna.pallala@intel.com>");
 MODULE_DESCRIPTION("X-power AXP288 Charger Driver");
 MODULE_LICENSE("GPL v2");
-MODULE_DEVICE_TABLE(platform, axp288_charger_id_table);

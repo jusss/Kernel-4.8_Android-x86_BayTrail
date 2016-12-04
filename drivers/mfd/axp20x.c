@@ -31,17 +31,6 @@
 
 #define AXP20X_OFF	0x80
 
-struct cell_dev_pdata {
-        struct list_head        list;
-        const char              *name;
-        void                    *data;
-        int                     len;
-        int                     id;
-};
-
-static LIST_HEAD(pdata_list);
-
-
 static const char * const axp20x_model_names[] = {
 	"AXP152",
 	"AXP202",
@@ -127,20 +116,8 @@ static const struct regmap_range axp288_writeable_ranges[] = {
 };
 
 static const struct regmap_range axp288_volatile_ranges[] = {
-	// 0x00 - 0x01 :
-	regmap_reg_range(AXP20X_PWR_INPUT_STATUS, AXP20X_PWR_OP_MODE),
-	// 0x33 - 0x33 :
-	regmap_reg_range(AXP20X_CHRG_CTRL1, AXP20X_CHRG_CTRL1),
-	// 0x3c - 0x3d :
-	regmap_reg_range(AXP20X_V_LTF_DISCHRG, AXP20X_V_HTF_DISCHRG),
-	// 0x40 - 0x7f :
 	regmap_reg_range(AXP20X_IRQ1_EN, AXP20X_IPSOUT_V_HIGH_L),
-	// 0x84 - 0x84 :
-	regmap_reg_range(AXP20X_ADC_RATE, AXP20X_ADC_RATE),
-	// 0xb8 - 0xbd :
-	regmap_reg_range(AXP20X_CC_CTRL, AXP288_FG_OCVL_REG),
-	// 0xe0 - 0xed :
-	regmap_reg_range(AXP288_FG_DES_CAP1_REG, AXP288_FG_TUNE5),
+	regmap_reg_range(AXP20X_FG_RES, AXP20X_FG_RES),
 };
 
 static const struct regmap_access_table axp288_writeable_table = {
@@ -695,27 +672,6 @@ static struct mfd_cell axp809_cells[] = {
 };
 
 static struct axp20x_dev *axp20x_pm_power_off;
-
-int axp20x_set_pdata(const char *name, void *data, int len, int id)
-{
-        struct cell_dev_pdata *pdata;
-
-        pdata = kzalloc(sizeof(*pdata), GFP_KERNEL);
-        if (!pdata) {
-                pr_err("axp20x: can't set pdata!\n");
-                return -ENOMEM;
-        }
-
-        pdata->name = name;
-        pdata->data = data;
-        pdata->len = len;
-        pdata->id = id;
-        list_add_tail(&pdata->list, &pdata_list);
-
-        return 0;
-}
-EXPORT_SYMBOL(axp20x_set_pdata);
-
 static void axp20x_power_off(void)
 {
 	if (axp20x_pm_power_off->variant == AXP288_ID)
@@ -796,8 +752,7 @@ EXPORT_SYMBOL(axp20x_match_device);
 
 int axp20x_device_probe(struct axp20x_dev *axp20x)
 {
-	int i, ret;
-	struct cell_dev_pdata *pdata;
+	int ret;
 
 	ret = regmap_add_irq_chip(axp20x->regmap, axp20x->irq,
 				  IRQF_ONESHOT | IRQF_SHARED, -1,
@@ -807,17 +762,6 @@ int axp20x_device_probe(struct axp20x_dev *axp20x)
 		dev_err(axp20x->dev, "failed to add irq chip: %d\n", ret);
 		return ret;
 	}
-
-        for (i = 0; axp20x->cells[i].name != NULL; i++) {
-                list_for_each_entry(pdata, &pdata_list, list) {
-                        if (!strcmp(pdata->name, axp20x->cells[i].name) &&
-                                        (pdata->id == axp20x->cells[i].id)) {
-                                axp20x->cells[i].platform_data = pdata->data;
-                                axp20x->cells[i].pdata_size = pdata->len;
-				dev_info(axp20x->dev,"added platform data for %s\n",axp20x->cells[i].name);
-                        }
-                }
-        }
 
 	ret = mfd_add_devices(axp20x->dev, -1, axp20x->cells,
 			      axp20x->nr_cells, NULL, 0, NULL);
